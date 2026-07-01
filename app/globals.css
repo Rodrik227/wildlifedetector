@@ -1,26 +1,154 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #09090b; /* Default to dark theme for monitoring console */
+  --foreground: #f4f4f5;
+  --accent-emerald: #10b981;
+  --accent-cyan: #06b6d4;
+  --accent-amber: #f59e0b;
+  --accent-rose: #f43f5e;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui;
+  --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom Tactical Monitoring Animations */
+
+@keyframes scanline {
+  0% {
+    transform: translateY(-100%);
+  }
+  100% {
+    transform: translateY(100%);
+  }
+}
+
+@keyframes scanline-slow {
+  0% {
+    top: 0%;
+  }
+  100% {
+    top: 100%;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.3;
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(16, 185, 129, 0.6);
+  }
+}
+
+@keyframes pulse-glow-rose {
+  0%, 100% {
+    opacity: 0.3;
+    box-shadow: 0 0 5px rgba(244, 63, 94, 0.2);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 15px rgba(244, 63, 94, 0.6);
+  }
+}
+
+@keyframes radar-sweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes static-noise {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-1%, -1%); }
+  20% { transform: translate(-3%, 1%); }
+  30% { transform: translate(1%, -2%); }
+  40% { transform: translate(-1%, 3%); }
+  55% { transform: translate(2%, -1%); }
+  70% { transform: translate(-2%, 1%); }
+  85% { transform: translate(3%, -3%); }
+  95% { transform: translate(-1%, 2%); }
+}
+
+@keyframes blink-fast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+.animate-scanline {
+  animation: scanline 6s linear infinite;
+}
+
+.animate-scanline-fast {
+  animation: scanline 2.5s linear infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s infinite ease-in-out;
+}
+
+.animate-pulse-glow-rose {
+  animation: pulse-glow-rose 1.5s infinite ease-in-out;
+}
+
+.animate-radar {
+  animation: radar-sweep 8s linear infinite;
+}
+
+.animate-noise {
+  animation: static-noise 0.2s infinite steps(1);
+}
+
+.animate-blink {
+  animation: blink-fast 1s infinite steps(1);
+}
+
+/* Glassmorphism tactical panels */
+.panel-glass {
+  background: rgba(15, 15, 20, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(63, 63, 70, 0.4);
+}
+
+.panel-glass-emerald {
+  background: rgba(9, 25, 20, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.panel-glass-cyan {
+  background: rgba(9, 23, 27, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+/* Scan grid overlay */
+.grid-overlay {
+  background-size: 30px 30px;
+  background-image: 
+    linear-gradient(to right, rgba(63, 63, 70, 0.1) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(63, 63, 70, 0.1) 1px, transparent 1px);
+}
+
+.grid-overlay-emerald {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
 }
