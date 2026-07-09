@@ -15,9 +15,9 @@ fi
 
 # Verifica e instala as dependências se necessário
 echo "[+] Verificando dependências do Python..."
-python3 -c "import serial" &> /dev/null
+python3 -c "import serial, cv2, psutil" &> /dev/null
 if [ $? -ne 0 ]; then
-    echo "[!] Biblioteca 'pyserial' não instalada. Instalando dependências..."
+    echo "[!] Bibliotecas Python necessárias (pyserial, opencv-python, psutil) não estão totalmente instaladas. Instalando dependências..."
     if command -v pip3 &> /dev/null; then
         pip3 install -r requirements.txt
     elif command -v pip &> /dev/null; then
