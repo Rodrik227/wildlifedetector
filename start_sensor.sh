@@ -40,7 +40,7 @@ source .venv/bin/activate
 # Instala dependências se necessário
 echo "[+] Testando importação dos pacotes Python no .venv..."
 python3 -c "
-libs = {'serial': 'pyserial', 'cv2': 'opencv-python', 'psutil': 'psutil'}
+libs = {'serial': 'pyserial', 'psutil': 'psutil'}
 missing = False
 for lib, pkg in libs.items():
     try:
@@ -53,8 +53,8 @@ if missing:
     exit(1)
 "
 if [ $? -ne 0 ]; then
-    echo "[!] Dependências ausentes ou incompletas detectadas no .venv. Instalando do requirements.txt..."
-    pip install -r requirements.txt
+    echo "[!] Dependências ausentes ou incompletas detectadas no .venv. Instalando..."
+    pip install pyserial psutil
     if [ $? -ne 0 ]; then
         echo "[-] Erro ao instalar dependências no ambiente virtual."
         exit 1

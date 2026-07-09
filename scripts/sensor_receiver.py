@@ -64,17 +64,16 @@ def get_system_stats():
         except Exception:
             pass
             
-    # Detecção do servidor de câmeras e contagem de câmeras ativas (porta 8080)
+    # Detecção e contagem de câmeras ativas via processos do mjpg-streamer
     cam_online = 0
-    try:
-        import urllib.request
-        import json
-        req = urllib.request.Request('http://127.0.0.1:8080/status')
-        with urllib.request.urlopen(req, timeout=0.2) as response:
-            data = json.loads(response.read().decode('utf-8'))
-            cam_online = int(data.get("count", 0))
-    except Exception:
-        pass
+    if psutil:
+        try:
+            for proc in psutil.process_iter(['name']):
+                name = proc.info.get('name') or ''
+                if 'mjpg_streamer' in name.lower() or 'mjpg-streamer' in name.lower():
+                    cam_online += 1
+        except Exception:
+            pass
         
     return cpu, ram, cam_online
 

@@ -5,12 +5,12 @@ trap cleanup INT
 
 cleanup() {
   echo -e "\n\n[+] Encerrando todos os serviços..."
-  kill "$WEB_PID" "$CAM_PID" "$SENSOR_PID" 2>/dev/null
+  kill "$WEB_PID" "$SENSOR_PID" $CAM1_PID $CAM2_PID 2>/dev/null
   exit 0
 }
 
 echo "============================================================"
-echo "    WILDLENS - INICIALIZADOR COMPLETO (LINUX)               "
+echo "    WILDLENS - INICIALIZADOR COMPLETO (LINUX + MJPEG)       "
 echo "============================================================"
 echo ""
 
@@ -34,6 +34,18 @@ else
     echo "[!] Por favor, instale o Python 3 antes de continuar."
     exit 1
 fi
+
+if command -v mjpg_streamer &> /dev/null; then
+    echo "    - mjpg-streamer: Encontrado ($(command -v mjpg_streamer))"
+else
+    echo "[-] Erro: mjpg-streamer não está instalado."
+    echo "[!] Por favor, instale o mjpg-streamer para economizar CPU."
+    echo "    Instale-o com: sudo apt update && sudo apt install mjpg-streamer -y"
+    exit 1
+fi
+
+# Exportar caminhos comuns de bibliotecas para plugins do mjpg-streamer
+export LD_LIBRARY_PATH="/usr/lib/mjpg-streamer:/usr/local/lib/mjpg-streamer:/usr/lib/x86_64-linux-gnu/mjpg-streamer:$LD_LIBRARY_PATH"
 
 # 2. Instalar dependências do Node se necessário
 if [ ! -d "node_modules" ]; then
@@ -62,10 +74,10 @@ fi
 echo "[+] Ativando ambiente virtual (.venv)..."
 source .venv/bin/activate
 
-# Instalar dependências do Python se necessário
+# Instalar dependências do Python se necessário (apenas pyserial e psutil)
 echo "[+] Testando importação dos pacotes Python no .venv..."
 python3 -c "
-libs = {'serial': 'pyserial', 'cv2': 'opencv-python', 'psutil': 'psutil'}
+libs = {'serial': 'pyserial', 'psutil': 'psutil'}
 missing = False
 for lib, pkg in libs.items():
     try:
@@ -78,15 +90,16 @@ if missing:
     exit(1)
 "
 if [ $? -ne 0 ]; then
-    echo "[!] Dependências ausentes ou incompletas detectadas no .venv. Instalando do requirements.txt..."
-    pip install -r requirements.txt
+    echo "[!] Dependências do sensor ausentes ou incompletas detectadas no .venv. Instalando..."
+    # Instala apenas pyserial e psutil para evitar o peso do opencv no processador antigo
+    pip install pyserial psutil
     if [ $? -ne 0 ]; then
         echo "[-] Erro ao instalar dependências no ambiente virtual."
         exit 1
     fi
     echo "[+] Dependências instaladas com sucesso no .venv!"
 else
-    echo "[+] Todos os pacotes Python necessários estão instalados."
+    echo "[+] Todos os pacotes Python necessários para o sensor estão instalados."
 fi
 
 # Dica de permissões para portas USB serial no Linux
@@ -99,6 +112,24 @@ if ! groups | grep -q "dialout"; then
     echo "    (Lembre-se de reiniciar sua sessão/computador após rodar o usermod)"
 fi
 
+# Detecção de câmeras
+echo "[+] Detectando câmeras conectadas..."
+CAMERAS=()
+for dev in /dev/video*; do
+    if [ -c "$dev" ]; then
+        syspath="/sys/class/video4linux/$(basename $dev)/index"
+        if [ -f "$syspath" ] && [ "$(cat $syspath)" -eq 0 ]; then
+            CAMERAS+=("$dev")
+        fi
+    fi
+done
+
+NUM_CAMS=${#CAMERAS[@]}
+echo "    - Câmeras físicas de captura encontradas: $NUM_CAMS"
+for i in "${!CAMERAS[@]}"; do
+    echo "      * Câmera $i: ${CAMERAS[$i]}"
+done
+
 echo ""
 echo "[+] Inicializando os serviços em segundo plano..."
 echo ""
@@ -108,13 +139,28 @@ echo "[1/3] Iniciando Servidor Web (Next.js - Porta 3000)..."
 npm run build && npm run start &
 WEB_PID=$!
 
-# Aguarda um momento antes de rodar os scripts de Python para evitar conflito de logs iniciais
+# Aguarda um momento antes de rodar os scripts de vídeo
 sleep 2
 
-# [2/3] Iniciando Transmissão da Câmera
-echo "[2/3] Iniciando Transmissão da Câmera (Porta 8080)..."
-python3 scripts/camera_sender.py &
-CAM_PID=$!
+# [2/3] Iniciando Transmissão da Câmera (mjpg-streamer)
+CAM1_PID=""
+CAM2_PID=""
+
+if [ $NUM_CAMS -eq 0 ]; then
+    echo "[-] Aviso: Nenhuma câmera física encontrada em /dev/video* para transmissão."
+else
+    # Câmera 1 (Porta 8080)
+    echo "[2/3] Iniciando mjpg-streamer para Câmera 1 (${CAMERAS[0]}) na Porta 8080..."
+    mjpg_streamer -i "input_uvc.so -d ${CAMERAS[0]} -r 640x360 -f 15" -o "output_http.so -p 8080" &>/dev/null &
+    CAM1_PID=$!
+    
+    # Câmera 2 (Porta 8081) se disponível
+    if [ $NUM_CAMS -gt 1 ]; then
+        echo "[2/3] Iniciando mjpg-streamer para Câmera 2 (${CAMERAS[1]}) na Porta 8081..."
+        mjpg_streamer -i "input_uvc.so -d ${CAMERAS[1]} -r 640x360 -f 15" -o "output_http.so -p 8081" &>/dev/null &
+        CAM2_PID=$!
+    fi
+fi
 
 # [3/3] Iniciando Receptor dos Sensores
 echo "[3/3] Iniciando Receptor do Sensor (Arduino)..."
@@ -123,9 +169,14 @@ SENSOR_PID=$!
 
 echo ""
 echo "============================================================"
-echo "[!] Todos os serviços foram iniciados em segundo plano!"
+echo "[!] Todos os serviços foram iniciados!"
 echo "    - Servidor Web PID: $WEB_PID (Porta 3000)"
-echo "    - Câmera Stream PID: $CAM_PID (Porta 8080)"
+if [ -n "$CAM1_PID" ]; then
+    echo "    - mjpg-streamer Câmera 1 PID: $CAM1_PID (Porta 8080)"
+fi
+if [ -n "$CAM2_PID" ]; then
+    echo "    - mjpg-streamer Câmera 2 PID: $CAM2_PID (Porta 8081)"
+fi
 echo "    - Sensor Receiver PID: $SENSOR_PID"
 echo ""
 echo "[i] Pressione Ctrl+C a qualquer momento para encerrar TODOS os serviços."

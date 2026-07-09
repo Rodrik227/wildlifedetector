@@ -35,7 +35,7 @@ export default function CameraMonitor({ onCapture }: CameraMonitorProps) {
   const [webcamActive2, setWebcamActive2] = useState(false);
 
   // Streaming Options (for MONITOR mode)
-  const [streamSource, setStreamSource] = useState<'NEXTJS' | 'PYTHON'>('NEXTJS');
+  const [streamSource, setStreamSource] = useState<'NEXTJS' | 'PYTHON' | 'MJPEG_STREAMER'>('NEXTJS');
   const [pythonServerIp, setPythonServerIp] = useState('localhost:8080');
 
   // Image Refs (for MONITOR mode canvas grabbings)
@@ -45,10 +45,14 @@ export default function CameraMonitor({ onCapture }: CameraMonitorProps) {
   // Derived Stream Feed URLs
   const cameraFeed1 = streamSource === 'NEXTJS'
     ? '/api/camera/stream?id=1'
+    : streamSource === 'MJPEG_STREAMER'
+    ? `http://${pythonServerIp.split(':')[0]}:8080/?action=stream`
     : `http://${pythonServerIp}/video1`;
 
   const cameraFeed2 = streamSource === 'NEXTJS'
     ? '/api/camera/stream?id=2'
+    : streamSource === 'MJPEG_STREAMER'
+    ? `http://${pythonServerIp.split(':')[0]}:8081/?action=stream`
     : `http://${pythonServerIp}/video2`;
 
   // Snapshot Capture Canvases
@@ -784,6 +788,8 @@ export default function CameraMonitor({ onCapture }: CameraMonitorProps) {
                       <span className="text-[8px] text-zinc-600 mt-1">
                         {streamSource === 'NEXTJS' 
                           ? 'Inicie a transmissão no computador base' 
+                          : streamSource === 'MJPEG_STREAMER'
+                          ? 'Verifique se o mjpg-streamer está rodando nas portas 8080/8081'
                           : 'Verifique se o script Python está rodando no IP correto'}
                       </span>
                     </div>
@@ -944,6 +950,8 @@ export default function CameraMonitor({ onCapture }: CameraMonitorProps) {
                       <span className="text-[8px] text-zinc-600 mt-1">
                         {streamSource === 'NEXTJS' 
                           ? 'Inicie a transmissão no computador base' 
+                          : streamSource === 'MJPEG_STREAMER'
+                          ? 'Verifique se o mjpg-streamer está rodando nas portas 8080/8081'
                           : 'Verifique se o script Python está rodando no IP correto'}
                       </span>
                     </div>
@@ -1153,37 +1161,49 @@ export default function CameraMonitor({ onCapture }: CameraMonitorProps) {
               <div className="mt-5 bg-zinc-950/50 p-4 rounded-xl border border-zinc-850 space-y-3">
                 <span className="font-mono text-[9px] text-zinc-500 uppercase tracking-widest block">Origem do Vídeo Remoto</span>
                 
-                <div className="flex gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => setStreamSource('NEXTJS')}
-                    className={`flex-1 py-1 rounded font-mono text-[9px] font-bold border transition-all ${
+                    className={`py-1 rounded font-mono text-[9px] font-bold border transition-all ${
                       streamSource === 'NEXTJS'
                         ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
                         : 'bg-zinc-900 border-zinc-850 text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
-                    SERVIDOR WEB
+                    NEXTJS
                   </button>
                   <button
                     onClick={() => setStreamSource('PYTHON')}
-                    className={`flex-1 py-1 rounded font-mono text-[9px] font-bold border transition-all ${
+                    className={`py-1 rounded font-mono text-[9px] font-bold border transition-all ${
                       streamSource === 'PYTHON'
                         ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400'
                         : 'bg-zinc-900 border-zinc-850 text-zinc-500 hover:text-zinc-300'
                     }`}
                   >
-                    IP PYTHON DIRETO
+                    PYTHON
+                  </button>
+                  <button
+                    onClick={() => setStreamSource('MJPEG_STREAMER')}
+                    className={`py-1 rounded font-mono text-[9px] font-bold border transition-all ${
+                      streamSource === 'MJPEG_STREAMER'
+                        ? 'bg-amber-500/15 border-amber-500/40 text-amber-400'
+                        : 'bg-zinc-900 border-zinc-850 text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    MJPEG
                   </button>
                 </div>
 
-                {streamSource === 'PYTHON' && (
+                {(streamSource === 'PYTHON' || streamSource === 'MJPEG_STREAMER') && (
                   <div className="space-y-1 pt-1.5">
-                    <span className="font-mono text-[8px] text-zinc-500 block uppercase">Endereço IP do Transmissor (Python)</span>
+                    <span className="font-mono text-[8px] text-zinc-500 block uppercase">
+                      {streamSource === 'MJPEG_STREAMER' ? 'IP do Servidor Linux (mjpg-streamer)' : 'Endereço IP do Transmissor (Python)'}
+                    </span>
                     <input
                       type="text"
                       value={pythonServerIp}
                       onChange={(e) => setPythonServerIp(e.target.value)}
-                      placeholder="Ex: 192.168.1.100:8080"
+                      placeholder={streamSource === 'MJPEG_STREAMER' ? "Ex: 192.168.1.100" : "Ex: 192.168.1.100:8080"}
                       className="w-full bg-zinc-950 border border-zinc-850 rounded px-2 py-1 text-[10px] font-mono text-zinc-200 outline-none focus:border-cyan-500 transition-colors"
                     />
                   </div>
