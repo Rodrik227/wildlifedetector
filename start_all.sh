@@ -151,13 +151,13 @@ if [ $NUM_CAMS -eq 0 ]; then
 else
     # Câmera 1 (Porta 8080)
     echo "[2/3] Iniciando mjpg-streamer para Câmera 1 (${CAMERAS[0]}) na Porta 8080..."
-    mjpg_streamer -i "input_uvc.so -d ${CAMERAS[0]} -r 640x360 -f 15" -o "output_http.so -p 8080" &>/dev/null &
+    mjpg_streamer -i "input_uvc.so -d ${CAMERAS[0]} -r 640x480 -f 15 -y" -o "output_http.so -p 8080 -l 0.0.0.0" &> mjpg_streamer1.log &
     CAM1_PID=$!
     
     # Câmera 2 (Porta 8081) se disponível
     if [ $NUM_CAMS -gt 1 ]; then
         echo "[2/3] Iniciando mjpg-streamer para Câmera 2 (${CAMERAS[1]}) na Porta 8081..."
-        mjpg_streamer -i "input_uvc.so -d ${CAMERAS[1]} -r 640x360 -f 15" -o "output_http.so -p 8081" &>/dev/null &
+        mjpg_streamer -i "input_uvc.so -d ${CAMERAS[1]} -r 640x480 -f 15 -y" -o "output_http.so -p 8081 -l 0.0.0.0" &> mjpg_streamer2.log &
         CAM2_PID=$!
     fi
 fi
