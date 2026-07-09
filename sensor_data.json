@@ -1,0 +1,9 @@
+{
+  "system_status": "online",
+  "cpu_usage": 10,
+  "ram_usage": 56,
+  "camera_online": true,
+  "timestamp": 1783038560296,
+  "temperature": 19.9,
+  "humidity": 61.0
+}

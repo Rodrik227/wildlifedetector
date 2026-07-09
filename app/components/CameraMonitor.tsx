@@ -1049,7 +1049,7 @@ export default function CameraMonitor({ onCapture }: CameraMonitorProps) {
                 ) : (
                   <span className="text-xs text-zinc-600 font-mono mt-2 animate-pulse">Lendo...</span>
                 )}
-                <span className="text-[8px] text-zinc-650 font-mono mt-1">DTH22_SENSOR_1</span>
+                <span className="text-[8px] text-zinc-650 font-mono mt-1">DHT11_SENSOR_T</span>
               </div>
 
               {/* Humidity Display */}
@@ -1065,7 +1065,86 @@ export default function CameraMonitor({ onCapture }: CameraMonitorProps) {
                 ) : (
                   <span className="text-xs text-zinc-600 font-mono mt-2 animate-pulse">Lendo...</span>
                 )}
-                <span className="text-[8px] text-zinc-650 font-mono mt-1">DTH22_SENSOR_2</span>
+                <span className="text-[8px] text-zinc-650 font-mono mt-1">DHT11_SENSOR_H</span>
+              </div>
+
+              {/* CPU Usage Display */}
+              <div className="bg-zinc-950/70 p-4 rounded-xl border border-zinc-850 flex flex-col justify-between min-h-[90px] hover:border-cyan-500/30 transition-all duration-300">
+                <span className="font-mono text-[9px] text-zinc-500 uppercase tracking-widest block">Uso da CPU</span>
+                {sensorStatus === 'CONNECTED' && sensorData ? (
+                  <div className="mt-2 space-y-1.5">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-2xl font-bold text-cyan-400 font-mono tracking-tight">
+                        {sensorData.cpu_usage !== undefined ? sensorData.cpu_usage : 0}
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-mono">%</span>
+                    </div>
+                    <div className="w-full bg-zinc-900 rounded-full h-1 border border-zinc-800 overflow-hidden">
+                      <div 
+                        className="bg-cyan-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${sensorData.cpu_usage !== undefined ? Math.min(sensorData.cpu_usage, 100) : 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-xs text-zinc-600 font-mono mt-2 animate-pulse">Lendo...</span>
+                )}
+                <span className="text-[8px] text-zinc-650 font-mono mt-1">HOST_CPU_LOAD</span>
+              </div>
+
+              {/* RAM Usage Display */}
+              <div className="bg-zinc-950/70 p-4 rounded-xl border border-zinc-850 flex flex-col justify-between min-h-[90px] hover:border-cyan-500/30 transition-all duration-300">
+                <span className="font-mono text-[9px] text-zinc-500 uppercase tracking-widest block">Memória RAM</span>
+                {sensorStatus === 'CONNECTED' && sensorData ? (
+                  <div className="mt-2 space-y-1.5">
+                    <div className="flex items-baseline justify-between">
+                      <span className="text-2xl font-bold text-cyan-400 font-mono tracking-tight">
+                        {sensorData.ram_usage !== undefined ? sensorData.ram_usage : 0}
+                      </span>
+                      <span className="text-[10px] text-zinc-400 font-mono">%</span>
+                    </div>
+                    <div className="w-full bg-zinc-900 rounded-full h-1 border border-zinc-800 overflow-hidden">
+                      <div 
+                        className="bg-cyan-500 h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${sensorData.ram_usage !== undefined ? Math.min(sensorData.ram_usage, 100) : 0}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                ) : (
+                  <span className="text-xs text-zinc-600 font-mono mt-2 animate-pulse">Lendo...</span>
+                )}
+                <span className="text-[8px] text-zinc-650 font-mono mt-1">HOST_RAM_USAGE</span>
+              </div>
+            </div>
+
+            {/* Diagnostic Status indicators */}
+            <div className="mt-4 bg-zinc-950/50 p-4 rounded-xl border border-zinc-850 font-mono text-[9px] text-zinc-400 space-y-2.5">
+              <span className="text-zinc-500 uppercase tracking-widest block mb-1">Status dos Serviços</span>
+              
+              <div className="flex justify-between items-center">
+                <span>SCRIPT RECEPTOR ARDUINO</span>
+                <span className={`px-2 py-0.5 rounded font-bold text-[8px] border transition-all ${
+                  sensorStatus === 'CONNECTED' && sensorData?.system_status === 'online'
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                    : sensorStatus === 'CONNECTED' && sensorData?.system_status === 'inicializando'
+                    ? 'bg-amber-500/10 border-amber-500/30 text-amber-400 animate-pulse'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                }`}>
+                  {sensorStatus === 'CONNECTED'
+                    ? (sensorData?.system_status || 'ONLINE').toUpperCase()
+                    : 'ERRO / OFF'}
+                </span>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span>SERVIDOR DE CÂMERA (8080)</span>
+                <span className={`px-2 py-0.5 rounded font-bold text-[8px] border transition-all ${
+                  sensorStatus === 'CONNECTED' && sensorData?.camera_online
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-400'
+                }`}>
+                  {sensorStatus === 'CONNECTED' && sensorData?.camera_online ? 'ATIVO' : 'INATIVO'}
+                </span>
               </div>
             </div>
 

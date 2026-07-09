@@ -65,7 +65,7 @@ export default function Home() {
   }, []);
 
   const handleCapture = (
-    imageUrl: string, 
+    imageUrl: string,
     type: 'manual' | 'automatic',
     temp: number,
     humid: number,
@@ -146,7 +146,7 @@ export default function Home() {
 
   return (
     <div className="flex-1 flex flex-col min-h-screen bg-zinc-950 text-zinc-100 selection:bg-emerald-500/30 selection:text-emerald-400">
-      
+
       {/* Grid background overlay */}
       <div className="absolute inset-0 pointer-events-none grid-overlay opacity-30 z-0"></div>
 
@@ -165,7 +165,7 @@ export default function Home() {
 
       {/* Main Layout Container */}
       <div className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex flex-col gap-8 z-10">
-        
+
         {/* Tactical Header */}
         <header className="panel-glass rounded-2xl p-6 border border-zinc-800 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
           <div>
@@ -187,7 +187,7 @@ export default function Home() {
           <div className="flex flex-wrap items-center gap-3 sm:gap-6 font-mono text-[10px] text-zinc-500">
             <div className="bg-zinc-900/60 border border-zinc-850 px-3 py-1.5 rounded-xl">
               <span className="text-zinc-400 font-semibold block uppercase">Câmera Principal</span>
-              <span className="text-emerald-400 font-bold text-xs">WEBCAM // ONLINE</span>
+              <span className="text-emerald-400 font-bold text-xs">CAMERA // ONLINE</span>
             </div>
             <div className="bg-zinc-900/60 border border-zinc-850 px-3 py-1.5 rounded-xl">
               <span className="text-zinc-400 font-semibold block uppercase">Dossies Registrados</span>
@@ -213,7 +213,7 @@ export default function Home() {
             </h2>
             <div className="flex-1 h-px bg-zinc-800"></div>
           </div>
-          
+
           <CameraMonitor onCapture={handleCapture} />
         </section>
 
@@ -227,9 +227,9 @@ export default function Home() {
           </div>
 
           {hydrated ? (
-            <Catalog 
-              animals={animals} 
-              onDelete={handleDeleteAnimal} 
+            <Catalog
+              animals={animals}
+              onDelete={handleDeleteAnimal}
             />
           ) : (
             <div className="panel-glass rounded-2xl p-12 text-center border border-zinc-800 flex items-center justify-center">
@@ -256,7 +256,7 @@ export default function Home() {
         {/* Footer */}
         <footer className="mt-8 border-t border-zinc-900 pt-6 pb-8 text-center font-mono text-[9px] text-zinc-650 flex flex-col sm:flex-row items-center justify-between gap-2">
           <p>© 2026 WILDLENS CONSOLE. PROTOCOLO DE TRANSMISSÃO EM TEMPO REAL.</p>
-          <p className="text-zinc-600">SISTEMA INTEGRADO DE TELEMETRIA DHT22 / WEBCAM SENSOR</p>
+          <p className="text-zinc-600">SISTEMA INTEGRADO DE TELEMETRIA DHT11 / WEBCAM SENSOR</p>
         </footer>
 
       </div>

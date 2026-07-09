@@ -18,4 +18,10 @@ export interface SensorData {
   temperature: number;
   humidity: number;
   timestamp: number;
+  system_status?: 'inicializando' | 'online' | 'erro';
+  cpu_usage?: number;
+  ram_usage?: number;
+  camera_online?: boolean;
+  source?: 'arduino_real' | 'simulation';
 }
+
