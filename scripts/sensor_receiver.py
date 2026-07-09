@@ -64,13 +64,15 @@ def get_system_stats():
         except Exception:
             pass
             
-    # Detecção do servidor de câmeras (porta 8080)
+    # Detecção do servidor de câmeras e contagem de câmeras ativas (porta 8080)
     cam_online = 0
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.settimeout(0.2)
-            s.connect(('127.0.0.1', 8080))
-            cam_online = 1
+        import urllib.request
+        import json
+        req = urllib.request.Request('http://127.0.0.1:8080/status')
+        with urllib.request.urlopen(req, timeout=0.2) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            cam_online = int(data.get("count", 0))
     except Exception:
         pass
         
@@ -144,7 +146,7 @@ def read_serial_loop(port_name):
                 
             if not line_bytes:
                 # Timeout de leitura (2s a 3s sem dados) - atualiza JSON com status
-                write_json_data("online", temp=last_temp, hum=last_humid, cpu=cpu, ram=ram, cam_online=(cam_online == 1))
+                write_json_data("online", temp=last_temp, hum=last_humid, cpu=cpu, ram=ram, cam_online=(cam_online > 0))
                 continue
                 
             try:
@@ -162,7 +164,7 @@ def read_serial_loop(port_name):
                 
                 if "error" in data:
                     print(f"[-] Erro reportado pelo Arduino: {data['error']}")
-                    write_json_data("online", temp=last_temp, hum=last_humid, cpu=cpu, ram=ram, cam_online=(cam_online == 1))
+                    write_json_data("online", temp=last_temp, hum=last_humid, cpu=cpu, ram=ram, cam_online=(cam_online > 0))
                     continue
                     
                 temperature = data.get("temperature")
@@ -173,7 +175,7 @@ def read_serial_loop(port_name):
                     last_humid = float(humidity)
                     
                     # Salva no arquivo JSON compartilhado
-                    write_json_data("online", temp=last_temp, hum=last_humid, cpu=cpu, ram=ram, cam_online=(cam_online == 1))
+                    write_json_data("online", temp=last_temp, hum=last_humid, cpu=cpu, ram=ram, cam_online=(cam_online > 0))
                     print(f"[Lido] Temp: {last_temp}°C | Umid: {last_humid}% | CPU: {cpu}% | RAM: {ram}% | Salvo no JSON")
                     
             except json.JSONDecodeError:

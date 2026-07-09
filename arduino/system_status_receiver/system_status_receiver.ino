@@ -97,7 +97,7 @@ void loop() {
         String usoRAM = payload.substring(segundoIndiceVirgula + 1, terceiroIndiceVirgula);
         String cameraOnline = payload.substring(terceiroIndiceVirgula + 1);
         
-        String statusCam = (cameraOnline == "1") ? "CAM:ON" : "CAM:OFF";
+        String statusCam = "CAM:" + cameraOnline;
         pcOnline = true;
         
         // --- EXIBIÇÃO NO LCD ---

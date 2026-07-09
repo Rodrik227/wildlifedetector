@@ -97,6 +97,23 @@ class CamStreamHandler(BaseHTTPRequestHandler):
                 pass
             except Exception as e:
                 print(f"[-] Desconexão na Câmera {key}: {e}")
+        elif self.path == '/status':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self.send_header('Access-Control-Allow-Origin', '*')
+            self.end_headers()
+            count = 0
+            if frame_data[1]["active"]:
+                count += 1
+            if frame_data[2]["active"]:
+                count += 1
+            import json
+            res = {
+                "cam1": frame_data[1]["active"],
+                "cam2": frame_data[2]["active"],
+                "count": count
+            }
+            self.wfile.write(json.dumps(res).encode('utf-8'))
         else:
             # Página inicial informativa
             self.send_response(200)
