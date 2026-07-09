@@ -15,13 +15,21 @@ echo "============================================================"
 echo ""
 
 # 1. Verificar dependências básicas
-if ! command -v node &> /dev/null; then
+echo "[+] Detectando versões do sistema..."
+NODE_VER=$(node -v 2>/dev/null)
+PYTHON_VER=$(python3 --version 2>/dev/null)
+
+if [ -n "$NODE_VER" ]; then
+    echo "    - Node.js: Encontrado ($NODE_VER)"
+else
     echo "[-] Erro: Node.js não está instalado ou não está no PATH."
     echo "[!] Por favor, instale o Node.js antes de continuar."
     exit 1
 fi
 
-if ! command -v python3 &> /dev/null; then
+if [ -n "$PYTHON_VER" ]; then
+    echo "    - Python: Encontrado ($PYTHON_VER)"
+else
     echo "[-] Erro: Python 3 não está instalado ou não está no PATH."
     echo "[!] Por favor, instale o Python 3 antes de continuar."
     exit 1
@@ -29,24 +37,56 @@ fi
 
 # 2. Instalar dependências do Node se necessário
 if [ ! -d "node_modules" ]; then
-    echo "[+] Instalando dependências do Node.js..."
+    echo "[+] Pasta 'node_modules' não encontrada. Instalando dependências do Node.js..."
     npm install
+else
+    echo "[+] Pasta 'node_modules' detectada. Dependências do Node.js já instaladas."
 fi
 
-# 3. Instalar dependências do Python se necessário
-echo "[+] Verificando dependências do Python..."
-python3 -c "import serial, cv2, psutil" &> /dev/null
-if [ $? -ne 0 ]; then
-    echo "[!] Bibliotecas Python necessárias (pyserial, opencv-python, psutil) não estão totalmente instaladas. Instalando dependências..."
-    if command -v pip3 &> /dev/null; then
-        pip3 install -r requirements.txt
-    elif command -v pip &> /dev/null; then
-        pip install -r requirements.txt
-    else
-        echo "[-] Erro: Nem pip nem pip3 foram encontrados no sistema."
-        echo "[!] Instale o pip ou instale as dependências listadas no requirements.txt manualmente."
+# 3. Configurar ambiente virtual Python (venv) no Linux (PEP 668)
+if [ ! -d ".venv" ]; then
+    echo "[+] Criando ambiente virtual Python (.venv)..."
+    python3 -m venv .venv
+    if [ $? -ne 0 ]; then
+        echo "[-] Erro ao criar o ambiente virtual."
+        echo "[!] Certifique-se de que o pacote 'python3-venv' está instalado."
+        echo "    Instale-o com: sudo apt update && sudo apt install python3-venv -y"
         exit 1
     fi
+    echo "[+] Ambiente virtual .venv criado com sucesso."
+else
+    echo "[+] Ambiente virtual .venv já existente."
+fi
+
+# Ativa o ambiente virtual (.venv)
+echo "[+] Ativando ambiente virtual (.venv)..."
+source .venv/bin/activate
+
+# Instalar dependências do Python se necessário
+echo "[+] Testando importação dos pacotes Python no .venv..."
+python3 -c "
+libs = {'serial': 'pyserial', 'cv2': 'opencv-python', 'psutil': 'psutil'}
+missing = False
+for lib, pkg in libs.items():
+    try:
+        __import__(lib)
+        print(f'    - Pacote {lib} ({pkg}): INSTALADO')
+    except ImportError:
+        print(f'    - Pacote {lib} ({pkg}): AUSENTE')
+        missing = True
+if missing:
+    exit(1)
+"
+if [ $? -ne 0 ]; then
+    echo "[!] Dependências ausentes ou incompletas detectadas no .venv. Instalando do requirements.txt..."
+    pip install -r requirements.txt
+    if [ $? -ne 0 ]; then
+        echo "[-] Erro ao instalar dependências no ambiente virtual."
+        exit 1
+    fi
+    echo "[+] Dependências instaladas com sucesso no .venv!"
+else
+    echo "[+] Todos os pacotes Python necessários estão instalados."
 fi
 
 # Dica de permissões para portas USB serial no Linux
