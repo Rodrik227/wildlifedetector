@@ -5,7 +5,7 @@ trap cleanup INT
 
 cleanup() {
   echo -e "\n\n[+] Encerrando todos os serviços..."
-  kill "$WEB_PID" "$SENSOR_PID" $CAM1_PID $CAM2_PID 2>/dev/null
+  kill "$WEB_PID" "$SENSOR_PID" $CAM1_PID 2>/dev/null
   exit 0
 }
 
@@ -130,6 +130,23 @@ for i in "${!CAMERAS[@]}"; do
     echo "      * Câmera $i: ${CAMERAS[$i]}"
 done
 
+SELECTED_CAM_INDEX=0
+if [ $NUM_CAMS -gt 1 ]; then
+    echo ""
+    echo "[?] Mais de uma câmera foi detectada. Qual câmera você deseja utilizar?"
+    for i in "${!CAMERAS[@]}"; do
+        echo "    $i) ${CAMERAS[$i]}"
+    done
+    read -p "Digite o número da câmera [0-$((NUM_CAMS-1))] (Padrão: 0): " opt
+    
+    if [[ "$opt" =~ ^[0-9]+$ ]] && [ "$opt" -lt "$NUM_CAMS" ]; then
+        SELECTED_CAM_INDEX=$opt
+    else
+        echo "[!] Opção inválida ou vazia. Usando a Câmera 0 como padrão."
+        SELECTED_CAM_INDEX=0
+    fi
+fi
+
 echo ""
 echo "[+] Inicializando os serviços em segundo plano..."
 echo ""
@@ -144,22 +161,14 @@ sleep 2
 
 # [2/3] Iniciando Transmissão da Câmera (mjpg-streamer)
 CAM1_PID=""
-CAM2_PID=""
 
 if [ $NUM_CAMS -eq 0 ]; then
     echo "[-] Aviso: Nenhuma câmera física encontrada em /dev/video* para transmissão."
 else
-    # Câmera 1 (Porta 8080)
-    echo "[2/3] Iniciando mjpg-streamer para Câmera 1 (${CAMERAS[0]}) na Porta 8080..."
-    mjpg_streamer -i "input_uvc.so -d ${CAMERAS[0]} -r 640x480 -f 15 -y" -o "output_http.so -p 8080 -l 0.0.0.0" &> mjpg_streamer1.log &
+    # Câmera Selecionada (Porta 8080)
+    echo "[2/3] Iniciando mjpg-streamer para Câmera $SELECTED_CAM_INDEX (${CAMERAS[$SELECTED_CAM_INDEX]}) na Porta 8080..."
+    mjpg_streamer -i "input_uvc.so -d ${CAMERAS[$SELECTED_CAM_INDEX]} -r 640x480 -f 15 -y" -o "output_http.so -p 8080 -l 0.0.0.0" &> mjpg_streamer1.log &
     CAM1_PID=$!
-    
-    # Câmera 2 (Porta 8081) se disponível
-    if [ $NUM_CAMS -gt 1 ]; then
-        echo "[2/3] Iniciando mjpg-streamer para Câmera 2 (${CAMERAS[1]}) na Porta 8081..."
-        mjpg_streamer -i "input_uvc.so -d ${CAMERAS[1]} -r 640x480 -f 15 -y" -o "output_http.so -p 8081 -l 0.0.0.0" &> mjpg_streamer2.log &
-        CAM2_PID=$!
-    fi
 fi
 
 # [3/3] Iniciando Receptor dos Sensores
@@ -172,10 +181,7 @@ echo "============================================================"
 echo "[!] Todos os serviços foram iniciados!"
 echo "    - Servidor Web PID: $WEB_PID (Porta 3000)"
 if [ -n "$CAM1_PID" ]; then
-    echo "    - mjpg-streamer Câmera 1 PID: $CAM1_PID (Porta 8080)"
-fi
-if [ -n "$CAM2_PID" ]; then
-    echo "    - mjpg-streamer Câmera 2 PID: $CAM2_PID (Porta 8081)"
+    echo "    - mjpg-streamer Câmera (Dispositivo: ${CAMERAS[$SELECTED_CAM_INDEX]}) PID: $CAM1_PID (Porta 8080)"
 fi
 echo "    - Sensor Receiver PID: $SENSOR_PID"
 echo ""
