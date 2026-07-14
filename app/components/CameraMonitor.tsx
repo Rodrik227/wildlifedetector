@@ -22,6 +22,7 @@ export default function CameraMonitor({ onCapture }: CameraMonitorProps) {
 
   // Streaming IP Option for direct MJPEG stream
   const [mjpegServerIp, setMjpegServerIp] = useState('localhost');
+  const [ipInput, setIpInput] = useState('localhost');
 
   // Image Refs (for MONITOR mode canvas grabbings)
   const imgRef1 = useRef<HTMLImageElement>(null);
@@ -504,17 +505,30 @@ export default function CameraMonitor({ onCapture }: CameraMonitorProps) {
             <div className="mt-5 bg-zinc-950/50 p-4 rounded-xl border border-zinc-850 space-y-3">
               <span className="font-mono text-[9px] text-zinc-500 uppercase tracking-widest block">Endereço IP do Streamer (MJPEG)</span>
               
-              <div className="space-y-1 pt-1.5">
+              <div className="space-y-2 pt-1.5">
                 <span className="font-mono text-[8px] text-zinc-500 block uppercase">
                   IP do Servidor (mjpg-streamer)
                 </span>
-                <input
-                  type="text"
-                  value={mjpegServerIp}
-                  onChange={(e) => setMjpegServerIp(e.target.value)}
-                  placeholder="Ex: 192.168.1.100 ou localhost"
-                  className="w-full bg-zinc-950 border border-zinc-850 rounded px-2 py-1 text-[10px] font-mono text-zinc-200 outline-none focus:border-amber-500 transition-colors"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={ipInput}
+                    onChange={(e) => setIpInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        setMjpegServerIp(ipInput);
+                      }
+                    }}
+                    placeholder="Ex: 192.168.1.100 ou localhost"
+                    className="flex-1 bg-zinc-950 border border-zinc-850 rounded px-2 py-1 text-[10px] font-mono text-zinc-200 outline-none focus:border-amber-500 transition-colors"
+                  />
+                  <button
+                    onClick={() => setMjpegServerIp(ipInput)}
+                    className="px-3 py-1 rounded bg-zinc-900 border border-zinc-800 text-zinc-300 font-mono text-[9px] font-bold hover:bg-zinc-850 hover:border-zinc-700 active:scale-95 transition-all"
+                  >
+                    CONECTAR
+                  </button>
+                </div>
               </div>
             </div>
 

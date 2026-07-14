@@ -45,7 +45,7 @@ else
 fi
 
 # Exportar caminhos comuns de bibliotecas para plugins do mjpg-streamer
-export LD_LIBRARY_PATH="/usr/lib/mjpg-streamer:/usr/local/lib/mjpg-streamer:/usr/lib/x86_64-linux-gnu/mjpg-streamer:$LD_LIBRARY_PATH"
+export LD_LIBRARY_PATH="/usr/local/lib/mjpg-streamer:$LD_LIBRARY_PATH"
 
 # 2. Instalar dependências do Node se necessário
 if [ ! -d "node_modules" ]; then
