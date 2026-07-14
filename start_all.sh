@@ -5,7 +5,7 @@ trap cleanup INT
 
 cleanup() {
   echo -e "\n\n[+] Encerrando todos os serviços..."
-  kill "$WEB_PID" "$SENSOR_PID" $CAM1_PID 2>/dev/null
+  kill "$WEB_PID" "$SENSOR_PID" $CAM1_PID $CAM2_PID 2>/dev/null
   exit 0
 }
 
@@ -130,20 +130,37 @@ for i in "${!CAMERAS[@]}"; do
     echo "      * Câmera $i: ${CAMERAS[$i]}"
 done
 
-SELECTED_CAM_INDEX=0
-if [ $NUM_CAMS -gt 1 ]; then
-    echo ""
-    echo "[?] Mais de uma câmera foi detectada. Qual câmera você deseja utilizar?"
-    for i in "${!CAMERAS[@]}"; do
-        echo "    $i) ${CAMERAS[$i]}"
-    done
-    read -p "Digite o número da câmera [0-$((NUM_CAMS-1))] (Padrão: 0): " opt
-    
-    if [[ "$opt" =~ ^[0-9]+$ ]] && [ "$opt" -lt "$NUM_CAMS" ]; then
-        SELECTED_CAM_INDEX=$opt
+SELECTED_CAM1_INDEX=0
+SELECTED_CAM2_INDEX=""
+if [ $NUM_CAMS -gt 0 ]; then
+    if [ $NUM_CAMS -eq 1 ]; then
+        SELECTED_CAM1_INDEX=0
+        echo "[i] Apenas 1 câmera detectada. Usando-a para a Câmera 1."
     else
-        echo "[!] Opção inválida ou vazia. Usando a Câmera 0 como padrão."
-        SELECTED_CAM_INDEX=0
+        SELECTED_CAM2_INDEX=1
+        echo ""
+        echo "[?] Mais de uma câmera foi detectada. Por favor, selecione os dispositivos para cada canal."
+        for i in "${!CAMERAS[@]}"; do
+            echo "    $i) ${CAMERAS[$i]}"
+        done
+        
+        # Seleção da Câmera 1
+        read -p "Digite o número da Câmera 1 (Porta 8080) [0-$((NUM_CAMS-1))] (Padrão: 0): " opt1
+        if [[ "$opt1" =~ ^[0-9]+$ ]] && [ "$opt1" -lt "$NUM_CAMS" ]; then
+            SELECTED_CAM1_INDEX=$opt1
+        else
+            echo "[!] Opção inválida ou vazia. Usando Câmera 0 como padrão."
+            SELECTED_CAM1_INDEX=0
+        fi
+        
+        # Seleção da Câmera 2
+        read -p "Digite o número da Câmera 2 (Porta 8081) [0-$((NUM_CAMS-1))] (Padrão: 1): " opt2
+        if [[ "$opt2" =~ ^[0-9]+$ ]] && [ "$opt2" -lt "$NUM_CAMS" ]; then
+            SELECTED_CAM2_INDEX=$opt2
+        else
+            echo "[!] Opção inválida ou vazia. Usando Câmera 1 como padrão."
+            SELECTED_CAM2_INDEX=1
+        fi
     fi
 fi
 
@@ -161,14 +178,22 @@ sleep 2
 
 # [2/3] Iniciando Transmissão da Câmera (mjpg-streamer)
 CAM1_PID=""
+CAM2_PID=""
 
 if [ $NUM_CAMS -eq 0 ]; then
     echo "[-] Aviso: Nenhuma câmera física encontrada em /dev/video* para transmissão."
 else
-    # Câmera Selecionada (Porta 8080)
-    echo "[2/3] Iniciando mjpg-streamer para Câmera $SELECTED_CAM_INDEX (${CAMERAS[$SELECTED_CAM_INDEX]}) na Porta 8080..."
-    mjpg_streamer -i "input_uvc.so -d ${CAMERAS[$SELECTED_CAM_INDEX]} -r 640x480 -f 15 -y" -o "output_http.so -p 8080 -l 0.0.0.0" &> mjpg_streamer1.log &
+    # Câmera 1 (Porta 8080)
+    echo "[2/3] Iniciando mjpg-streamer para Câmera 1 (${CAMERAS[$SELECTED_CAM1_INDEX]}) na Porta 8080..."
+    mjpg_streamer -i "input_uvc.so -d ${CAMERAS[$SELECTED_CAM1_INDEX]} -r 640x480 -f 15 -y" -o "output_http.so -p 8080 -l 0.0.0.0" &> mjpg_streamer1.log &
     CAM1_PID=$!
+    
+    # Câmera 2 (Porta 8081)
+    if [ -n "$SELECTED_CAM2_INDEX" ]; then
+        echo "[2/3] Iniciando mjpg-streamer para Câmera 2 (${CAMERAS[$SELECTED_CAM2_INDEX]}) na Porta 8081..."
+        mjpg_streamer -i "input_uvc.so -d ${CAMERAS[$SELECTED_CAM2_INDEX]} -r 640x480 -f 15 -y" -o "output_http.so -p 8081 -l 0.0.0.0" &> mjpg_streamer2.log &
+        CAM2_PID=$!
+    fi
 fi
 
 # [3/3] Iniciando Receptor dos Sensores
@@ -181,7 +206,10 @@ echo "============================================================"
 echo "[!] Todos os serviços foram iniciados!"
 echo "    - Servidor Web PID: $WEB_PID (Porta 3000)"
 if [ -n "$CAM1_PID" ]; then
-    echo "    - mjpg-streamer Câmera (Dispositivo: ${CAMERAS[$SELECTED_CAM_INDEX]}) PID: $CAM1_PID (Porta 8080)"
+    echo "    - mjpg-streamer Câmera 1 (Dispositivo: ${CAMERAS[$SELECTED_CAM1_INDEX]}) PID: $CAM1_PID (Porta 8080)"
+fi
+if [ -n "$CAM2_PID" ]; then
+    echo "    - mjpg-streamer Câmera 2 (Dispositivo: ${CAMERAS[$SELECTED_CAM2_INDEX]}) PID: $CAM2_PID (Porta 8081)"
 fi
 echo "    - Sensor Receiver PID: $SENSOR_PID"
 echo ""
