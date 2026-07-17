@@ -126,6 +126,7 @@ def read_serial_loop(port_name):
         
         last_temp = None
         last_humid = None
+        last_print_time = 0
         
         while True:
             if not ser.is_open:
@@ -175,7 +176,11 @@ def read_serial_loop(port_name):
                     
                     # Salva no arquivo JSON compartilhado
                     write_json_data("online", temp=last_temp, hum=last_humid, cpu=cpu, ram=ram, cam_online=(cam_online > 0))
-                    print(f"[Lido] Temp: {last_temp}°C | Umid: {last_humid}% | CPU: {cpu}% | RAM: {ram}% | Salvo no JSON")
+                    
+                    current_time = time.time()
+                    if current_time - last_print_time >= 30:
+                        print(f"[Lido] Temp: {last_temp}°C | Umid: {last_humid}% | CPU: {cpu}% | RAM: {ram}% | Salvo no JSON")
+                        last_print_time = current_time
                     
             except json.JSONDecodeError:
                 print(f"[!] Dados corrompidos ou incompletos na serial: {line_bytes}")
@@ -212,16 +217,21 @@ def main():
     else:
         target_port = None
         
+    last_warning_time = 0
     while True:
         port = target_port if target_port else find_arduino_port()
         
         if not port:
-            print("[-] Nenhuma porta serial ativa encontrada no sistema.")
-            print("[!] Conecte o Arduino Uno via USB. Nova busca em 3 segundos...")
+            current_time = time.time()
+            if current_time - last_warning_time >= 30:
+                print("[-] Nenhuma porta serial ativa encontrada no sistema.")
+                print("[!] Conecte o Arduino Uno via USB. Nova busca em andamento...")
+                last_warning_time = current_time
             write_json_data("erro", cpu=0, ram=0, cam_online=False)
             time.sleep(3)
             continue
             
+        last_warning_time = 0
         read_serial_loop(port)
 
 if __name__ == "__main__":

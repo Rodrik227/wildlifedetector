@@ -1,9 +1,11 @@
 'use client';
+/* eslint-disable react-hooks/set-state-in-effect, react-hooks/purity */
 
 import React, { useState, useEffect, useRef } from 'react';
 import CameraMonitor from './components/CameraMonitor';
 import ScanModal from './components/ScanModal';
 import Catalog from './components/Catalog';
+import SensorChart from './components/SensorChart';
 import { CatalogedAnimal } from './types';
 
 export default function Home() {
@@ -209,7 +211,7 @@ export default function Home() {
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <h2 className="font-mono text-xs font-semibold tracking-wider text-zinc-400 uppercase">
-              // CANAL DE VÍDEO & TELEMETRIA DOS SENSORES // VIDEO STREAM & TELEMETRY
+              {"// CANAL DE VÍDEO & TELEMETRIA DOS SENSORES // VIDEO STREAM & TELEMETRY"}
             </h2>
             <div className="flex-1 h-px bg-zinc-800"></div>
           </div>
@@ -217,11 +219,16 @@ export default function Home() {
           <CameraMonitor onCapture={handleCapture} />
         </section>
 
+        {/* Section: Histórico de Telemetria Ambiental */}
+        <section className="space-y-4">
+          <SensorChart />
+        </section>
+
         {/* Section 2: Catalog Database of Detections */}
         <section className="space-y-4 flex-1">
           <div className="flex items-center gap-2">
             <h2 className="font-mono text-xs font-semibold tracking-wider text-zinc-400 uppercase">
-              // HISTÓRICO DE CAPTURAS REGISTRADAS // DETECTION LOG DATABASE
+              {"// HISTÓRICO DE CAPTURAS REGISTRADAS // DETECTION LOG DATABASE"}
             </h2>
             <div className="flex-1 h-px bg-zinc-800"></div>
           </div>
